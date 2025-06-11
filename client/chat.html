@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-black text-white d-flex flex-column vh-100">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+        <button class="btn btn-outline-light btn-sm" onclick="deslogar()">Deslogar</button>
+        <div>
+            <button class="btn btn-outline-danger btn-sm me-2" onclick="excluirSala()">Excluir Sala</button>
+            <button class="btn btn-outline-light btn-sm" onclick="voltarAoMenu()">Voltar ao Menu</button>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 overflow-auto p-3" id="mensagens"></div>
+
+    <div class="p-3 border-top border-secondary">
+        <div class="input-group">
+            <input type="text" id="mensagemInput" class="form-control" placeholder="Digite sua mensagem..." />
+            <button class="btn btn-primary" onclick="enviarMensagem()">Enviar</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+        const sala = params.get("sala");
+
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const usuarioId = payload.id;
+        const nome = payload.nome;
+
+        const socket = io({
+            auth: {
+                usuario: { id: usuarioId, nome },
+                sala
+            }
+        });
+
+        // RECEBER MENSAGEM AO VIVO
+        socket.on("mensagem", ({ texto, usuario }) => {
+            mostrarMensagem(usuario.id, usuario.nome, texto);
+        });
+
+        // ENVIAR MENSAGEM
+        function enviarMensagem() {
+            const input = document.getElementById("mensagemInput");
+            if (input && input.value.trim() !== "") {
+                socket.emit("mensagem", input.value);
+                input.value = "";
+            }
+        }
+
+        // EXIBIR MENSAGEM NA TELA
+
+        function mostrarMensagem(id, nome, texto) {
+            const div = document.createElement("div");
+            div.className = id === usuarioId ? "msg-eu" : "msg-outro";
+            div.textContent = id === usuarioId ? texto : `${nome}: ${texto}`;
+            document.getElementById("mensagens")?.appendChild(div);
+
+            // Rolar automaticamente para a última mensagem
+            const mensagensDiv = document.getElementById("mensagens");
+            mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+        }
+
+
+        // CARREGAR HISTÓRICO
+        async function carregarHistorico() {
+            const res = await fetch(`/mensagens/${sala}`, {
+                headers: { Authorization: "Bearer " + token }
+            });
+            const historico = await res.json();
+            historico.forEach(({ texto, nome, id }) => {
+                mostrarMensagem(id, nome, texto);
+            });
+        }
+
+        // ENTRAR COM ENTER
+        document.getElementById("mensagemInput").addEventListener("keydown", e => {
+            if (e.key === "Enter") enviarMensagem();
+        });
+
+        function deslogar() {
+            window.location.href = "/index.html";
+        }
+
+        function voltarAoMenu() {
+            window.location.href = "/salas.html?token=" + token;
+        }
+
+        function excluirSala() {
+            const senha = prompt("Digite a senha padrão para excluir esta sala:");
+            if (!senha) return;
+
+            fetch("/salas/excluir", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
+                body: JSON.stringify({ numero: sala, senha }),
+            }).then(res => {
+                if (res.status === 200) {
+                    alert("Sala excluída.");
+                    voltarAoMenu();
+                } else {
+                    alert("Senha incorreta ou erro ao excluir.");
+                }
+            });
+        }
+
+        // Ao abrir a página, carregar histórico
+        window.onload = carregarHistorico;
+    </script>
+</body>
+
+</html>
