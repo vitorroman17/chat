@@ -21,8 +21,9 @@ app.get("/", (req, res) => {
 app.use(cors());
 app.use(express.json());
 
-const JWT_SECRET = "segredo_super_secreto";
-const SENHA_PADRAO_EXCLUIR = "123456";
+const JWT_SECRET = process.env.JWT_SECRET || "segredo_padrao_inseguro";
+const SENHA_PADRAO_EXCLUIR = process.env.SENHA_PADRAO_EXCLUIR || "123456";
+
 
 // Utilitários
 function autenticar(req, res, next) {
