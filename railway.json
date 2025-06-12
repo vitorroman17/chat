@@ -1,10 +1,11 @@
 {
   "build": {
-    "builder": "NIXPACKS"
+    "env": {
+      "NODE_ENV": "production"
+    }
   },
-  "start": "npm start",
   "deploy": {
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "startCommand": "npm start",
+    "workdir": "server"
   }
 }

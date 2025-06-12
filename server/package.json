@@ -4,7 +4,7 @@
   "description": "Chat em tempo real com Socket.IO e PostgreSQL",
   "main": "index.js",
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
