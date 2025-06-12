@@ -1,7 +1,30 @@
-const socket = io();
+let socket = null;
 let usuarioId = null;
 let token = null;
 
+// Detecta token e sala da URL (se existir)
+const params = new URLSearchParams(window.location.search);
+const sala = params.get("sala");
+token = params.get("token");
+
+// Inicializa o socket apenas na página de chat
+if (window.location.pathname.includes("chat.html") && sala && token) {
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  usuarioId = payload.id;
+  socket = io({
+    auth: { usuario: { id: usuarioId }, sala }
+  });
+
+  // Recebe mensagens do servidor
+  socket.on("mensagem", ({ texto, usuario }) => {
+    const div = document.createElement("div");
+    div.className = usuarioId === usuario.id ? "msg-eu" : "msg-outro";
+    div.textContent = usuarioId === usuario.id ? texto : usuario.nome + ": " + texto;
+    document.getElementById("mensagens")?.appendChild(div);
+  });
+}
+
+// Login ou Registro
 function conectar() {
   const nome = document.getElementById("nome").value;
   const senha = document.getElementById("senha").value;
@@ -11,7 +34,6 @@ function conectar() {
     return;
   }
 
-  // Sempre tenta login. Se não encontrar nome+senha, cria novo.
   fetch("/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25,7 +47,6 @@ function conectar() {
         usuarioId = payload.id;
         window.location.href = "/salas.html?token=" + token;
       } else if (res.status === 401) {
-        // Nenhum usuário com esse nome e senha, então cria novo
         fetch("/registrar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -54,7 +75,6 @@ function conectar() {
       }
     });
 }
-
 
 function deslogar() {
   window.location.href = "/index.html";
@@ -93,7 +113,6 @@ function criarSala() {
     if (res.status === 201) entrarNaSala(nomeSala);
     else alert("Erro ao criar sala");
   });
-  console.log("Token:", getToken());
 }
 
 function entrarSala() {
@@ -175,7 +194,6 @@ function voltarAoMenu() {
   window.location.href = "/salas.html?token=" + getToken();
 }
 
-// Token da URL
 function getToken() {
   if (!token) {
     const params = new URLSearchParams(window.location.search);
@@ -184,35 +202,24 @@ function getToken() {
   return token;
 }
 
-
-// MENSAGENS
-socket.on("mensagem", ({ texto, usuario }) => {
-  const div = document.createElement("div");
-  div.className = usuarioId === usuario.id ? "msg-eu" : "msg-outro";
-  div.textContent = usuarioId === usuario.id ? texto : usuario.nome + ": " + texto;
-  document.getElementById("mensagens")?.appendChild(div);
-});
 // Ao carregar a página de salas, esconder todos os blocos
 window.onload = async function () {
-  esconderTodos?.(); // se estiver na tela de salas
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-  const sala = params.get("sala");
+  esconderTodos?.();
 
-  // Decodificar usuário
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  usuarioId = payload.id;
+  if (window.location.pathname.includes("chat.html") && sala && token) {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    usuarioId = payload.id;
 
-  // Recuperar histórico
-  const res = await fetch(`/mensagens/${sala}`, {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const historico = await res.json();
-  historico.forEach(({ texto, nome, id }) => {
-    const div = document.createElement("div");
-    div.className = usuarioId === id ? "msg-eu" : "msg-outro";
-    div.textContent = usuarioId === id ? texto : nome + ": " + texto;
-    document.getElementById("mensagens")?.appendChild(div);
-  });
+    const res = await fetch(`/mensagens/${sala}`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const historico = await res.json();
+    historico.forEach(({ texto, nome, id }) => {
+      const div = document.createElement("div");
+      div.className = usuarioId === id ? "msg-eu" : "msg-outro";
+      div.textContent = usuarioId === id ? texto : nome + ": " + texto;
+      document.getElementById("mensagens")?.appendChild(div);
+    });
+  }
 };
-
