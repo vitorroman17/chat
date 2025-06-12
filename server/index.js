@@ -12,7 +12,11 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 const path = require("path");
-app.use(express.static(path.join(__dirname, "../client")));
+app.use(express.static(path.resolve(__dirname, "..", "client")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "..", "client", "index.html"));
+});
 
 app.use(cors());
 app.use(express.json());
