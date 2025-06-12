@@ -172,6 +172,10 @@ app.get("/mensagens/:numero", autenticar, async (req, res) => {
 
 
 
+app.get("/healthz", (req, res) => {
+  res.sendStatus(200);
+});
+
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Rodando na porta ${PORT}`);
