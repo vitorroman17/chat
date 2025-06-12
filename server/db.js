@@ -1,14 +1,11 @@
 // db.js
-const { Client } = require('pg');
+const { Pool } = require('pg');
 
-const client = new Client({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'postgres',
-  password: 'Vitor',
-  port: 5432,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-client.connect();
-
-module.exports = client;
+module.exports = pool;
