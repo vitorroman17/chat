@@ -2,9 +2,9 @@
   "name": "socketio-chat",
   "version": "1.0.0",
   "description": "Chat em tempo real com Socket.IO e PostgreSQL",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server/index.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

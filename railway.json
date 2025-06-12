@@ -1,11 +1,6 @@
 {
   "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
+    "builder": "NIXPACKS"
   },
-  "deploy": {
-    "startCommand": "npm start",
-    "workdir": "server"
-  }
+  "start": "node server/index.js"
 }
