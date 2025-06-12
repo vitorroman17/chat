@@ -167,6 +167,7 @@ app.get("/mensagens/:numero", autenticar, async (req, res) => {
 
 
 
-server.listen(3001, () => {
-  console.log("Servidor rodando na porta 3001");
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Rodando na porta ${PORT}`);
 });
